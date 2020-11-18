@@ -1,9 +1,10 @@
-from Functions.getCarStats import *
-import sys
+from Commands.carinfo import Car
 import ac
 import acsys
+import sys
 
 #---VAR INITIALIZATION---#
+getcar = Car()
 lapCount = 0
 #----Arrays--#
 a_speedMS = []
@@ -25,11 +26,11 @@ def acUpdate(deltaT):
 
     laps = ac.getCarState(0, acsys.CS.LapCount)
 
-    a_speedMS.append(speedMS())
-    a_speedMPH.append(speedMPH())
-    a_speedKMH.append(speedKMH())
-    a_rpm.append(rmp())
-    a_gear.append(gear())
+    a_speedMS.append(getcar.speedMS())
+    a_speedMPH.append(getcar.speedMPH())
+    a_speedKMH.append(getcar.speedKMH())
+    a_rpm.append(getcar.rmp())
+    a_gear.append(getcar.gear())
 
     #---Get info when cross the lap---#
     if laps > lapCount:
