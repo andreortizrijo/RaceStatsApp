@@ -1,15 +1,17 @@
-import ac
-import acsys
+import ac, acsys
 
 car_properties_API = {
-            "speedms" : acsys.CS.SpeedMS,
-            "speedmph" : acsys.CS.SpeedMPH,
             "speedkmh" : acsys.CS.SpeedKMH,
             "rpm" : acsys.CS.RPM,
-            "gear" : acsys.CS.Gear
+            "gear" : acsys.CS.Gear,
+            "gas" : acsys.CS.Gas,
+            "brake" : acsys.CS.Brake,
+            "clutch" : acsys.CS.Clutch,
+            "steerangle" : acsys.CS.Steer,
+            "turbo" : acsys.CS.TurboBoost,
         }
 
 class Car():
 
-    def get(self, id, type):
-        return int(ac.getCarState(id, car_properties_API[type]))
+    def get(self, id, property):
+        return ac.getCarState(id, car_properties_API[property])
