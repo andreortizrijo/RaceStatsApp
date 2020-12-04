@@ -23,6 +23,7 @@ class TraitsDict(collections.MutableMapping, dict):
 
 class CarProperties():
     def __init__(self, id = 0, speedkmh = [], rpm = [], gear = [], gas = [], brake = [], clutch = [], steerangle = [], turbo = [], fuel = []):
+        self._tyre = TraitsDict({})
         self._id = id
         self._speedkmh = speedkmh
         self._rpm = rpm
@@ -32,7 +33,6 @@ class CarProperties():
         self._clutch = clutch
         self._steerangle = steerangle
         self._turbo = turbo
-        self._tyre = TraitsDict({})
         self._fuel = fuel
 
     @property

@@ -1,4 +1,5 @@
 from Info.car_info import Car
+from Info.track_info import Track
 from Properties.car_properties import CarProperties
 import ac, acsys
 import os, sys
@@ -16,6 +17,7 @@ from third_party.sim_info import info
 
 #---VAR INITIALIZATION---#
 car = Car()
+track = Track()
 carproperties = CarProperties()
 laps = 0
 lapcount = 0
@@ -83,6 +85,8 @@ def acUpdate(deltaT):
     wheelpressurefr.append(tyrepressure[1])
     wheelpressurerl.append(tyrepressure[2])
     wheelpressurerr.append(tyrepressure[3])
+
+    track.getName(carproperties.Id)
 
     #---Get info when cross the lap---#
     if laps > lapcount:
