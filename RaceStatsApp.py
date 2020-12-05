@@ -1,5 +1,6 @@
 from Info.car_info import Car
 from Info.track_info import Track
+from Info.player_info import Player
 from Properties.car_properties import CarProperties
 import ac, acsys
 import os, sys
@@ -18,6 +19,7 @@ from third_party.sim_info import info
 #---VAR INITIALIZATION---#
 car = Car()
 track = Track()
+player = Player()
 carproperties = CarProperties()
 laps = 0
 lapcount = 0
@@ -56,9 +58,11 @@ def acMain(ac_version):
 
 #---Updated Values---#
 def acUpdate(deltaT):
-    global laps, lapcount
+    global laps, lapcount, lp
 
     laps = ac.getCarState(carproperties.Id, acsys.CS.LapCount)
+
+    lp = info.graphics.currentTime
 
     tyretemperature = info.physics.tyreCoreTemperature
     tyrepressure = info.physics.wheelsPressure
@@ -87,6 +91,9 @@ def acUpdate(deltaT):
     wheelpressurerr.append(tyrepressure[3])
 
     track.getName(carproperties.Id)
+
+    # ac.log("--------------")
+    # ac.log(str(lp))
 
     #---Get info when cross the lap---#
     if laps > lapcount:
