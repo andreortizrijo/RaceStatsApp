@@ -2,10 +2,7 @@ from Info.car_info import Car
 from Info.track_info import Track
 from Info.player_info import Player
 from Properties.car_properties import CarProperties
-import ac, acsys
-import os, sys
-import platform
-import threading
+import ac, acsys, os, sys, platform
 
 if platform.architecture()[0] == "64bit":
     libdir = 'third_party/lib64'
@@ -38,6 +35,7 @@ wheelpressurefr = []
 wheelpressurerl = []
 wheelpressurerr = []
 
+#---HANDLERS---#
 def crossLap():
     carproperties._tyre["WheelTemperatureFL"] = wheeltemperaturefl
     carproperties._tyre["WheelTemperatureFR"] = wheeltemperaturefr
