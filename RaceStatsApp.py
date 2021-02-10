@@ -58,7 +58,9 @@ def acMain(ac_version):
 
 #---Updated Values---#
 def acUpdate(deltaT):
-    global laps, lapcount, lp
+    global laps, lapcount, lp, totalTime
+
+    status = info.graphics.status
 
     laps = ac.getCarState(carproperties.Id, acsys.CS.LapCount)
 
@@ -92,12 +94,19 @@ def acUpdate(deltaT):
 
     track.getName(carproperties.Id)
 
-    # ac.log("--------------")
-    # ac.log(str(lp))
+    totalTime = abs(info.graphics.sessionTimeLeft)
+    totalTime_seconds = (totalTime / 1000) % 60
+    totalTime_minutes = (totalTime // 1000) // 60
 
     #---Get info when cross the lap---#
     if laps > lapcount:
         lapcount = laps
-        
+
+        if status != 1:
+            ac.log(str("{:.0f}:{:06.3f}".format(totalTime_minutes, totalTime_seconds)))
+
+        ac.log(str(info.graphics.lastTime))
+        ac.log(str(info.graphics.bestTime))
+
         # t1 = threading.Thread(target=crossLap)
         # t1.start()
