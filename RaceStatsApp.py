@@ -2,10 +2,8 @@ from Info.car_info import Car
 from Info.track_info import Track
 from Info.player_info import Player
 from Properties.car_properties import CarProperties
-import ac, acsys
-import os, sys
-import platform
-import threading
+import ac, acsys, os, sys
+import platform, socket
 
 if platform.architecture()[0] == "64bit":
     libdir = 'third_party/lib64'
@@ -17,6 +15,16 @@ os.environ['PATH'] = os.environ['PATH'] + ";."
 from third_party.sim_info import info
 
 #---VAR INITIALIZATION---#
+HEADER = 64
+PORT = 8080
+ADDR = (SERVER, PORT)
+FORMAT = 'utf-8'
+DISCONNECT_MESSAGE = '!DISCONNECT'
+SERVER = '127.0.0.1'
+
+socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+socket.connect(ADDR)
+
 car = Car()
 track = Track()
 player = Player()
@@ -63,7 +71,6 @@ def acUpdate(deltaT):
     status = info.graphics.status
 
     laps = ac.getCarState(carproperties.Id, acsys.CS.LapCount)
-
     lp = info.graphics.currentTime
 
     tyretemperature = info.physics.tyreCoreTemperature
@@ -107,6 +114,3 @@ def acUpdate(deltaT):
 
         ac.log(str(info.graphics.lastTime))
         ac.log(str(info.graphics.bestTime))
-
-        # t1 = threading.Thread(target=crossLap)
-        # t1.start()
