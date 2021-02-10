@@ -1,15 +1,15 @@
 import ac, acsys
 
 car_properties_API = {
-            "speedkmh" : acsys.CS.SpeedKMH,
-            "rpm" : acsys.CS.RPM,
-            "gear" : acsys.CS.Gear,
-            "gas" : acsys.CS.Gas,
-            "brake" : acsys.CS.Brake,
-            "clutch" : acsys.CS.Clutch,
-            "steerangle" : acsys.CS.Steer,
-            "turbo" : acsys.CS.TurboBoost,
-        }
+    "speedkmh" : acsys.CS.SpeedKMH,
+    "rpm" : acsys.CS.RPM,
+    "gear" : acsys.CS.Gear,
+    "gas" : acsys.CS.Gas,
+    "brake" : acsys.CS.Brake,
+    "clutch" : acsys.CS.Clutch,
+    "steerangle" : acsys.CS.Steer,
+    "turbo" : acsys.CS.TurboBoost,
+}
 
 class Car():
 
