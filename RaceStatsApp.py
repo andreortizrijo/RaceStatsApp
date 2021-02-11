@@ -16,14 +16,14 @@ from third_party.sim_info import info
 
 #---VAR INITIALIZATION---#
 HEADER = 64
-SERVER = '192.168.1.22'
+SERVER = '192.168.1.17'
 PORT = 8080
 ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = '!DISCONNECT'
 
-socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-socket.connect(ADDR)
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client.connect(ADDR)
 
 car = Car()
 track = Track()
@@ -47,6 +47,16 @@ wheelpressurerl = []
 wheelpressurerr = []
 
 #---HANDLERS---#
+def send(msg):
+    message = msg.encode(FORMAT)
+
+    msg_length = len(message)
+    send_length = str(msg_length).encode(FORMAT)
+    send_length += b' ' * (HEADER - len(send_length))
+
+    client.send(send_length)
+    client.send(message)
+
 def crossLap():
     carproperties._tyre["WheelTemperatureFL"] = wheeltemperaturefl
     carproperties._tyre["WheelTemperatureFR"] = wheeltemperaturefr
@@ -106,14 +116,18 @@ def acUpdate(deltaT):
     totalTime_seconds = (totalTime / 1000) % 60
     totalTime_minutes = (totalTime // 1000) // 60
 
+    send(str(car.get(carproperties.Id, "rpm")))
+
     #---Get info when cross the lap---#
     if laps > lapcount:
         lapcount = laps
-
-        ac.log(str(sys.path))
 
         if status != 1:
             ac.log(str("{:.0f}:{:06.3f}".format(totalTime_minutes, totalTime_seconds)))
 
         ac.log(str(info.graphics.lastTime))
         ac.log(str(info.graphics.bestTime))
+
+#---When Close Game---#
+def acShutdown():
+    send(DISCONNECT_MESSAGE)
