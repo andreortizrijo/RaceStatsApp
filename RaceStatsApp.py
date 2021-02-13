@@ -1,9 +1,8 @@
 from Info.car_info import Car
 from Info.track_info import Track
 from Info.player_info import Player
-from Properties.car_properties import CarProperties
 import ac, acsys, os, sys
-import platform, socket
+import platform, socket, pickle, time
 
 if platform.architecture()[0] == "64bit":
     libdir = 'third_party/lib64'
@@ -15,7 +14,7 @@ os.environ['PATH'] = os.environ['PATH'] + ";."
 from third_party.sim_info import info
 
 #---VAR INITIALIZATION---#
-HEADER = 64
+HEADER = 30
 SERVER = '192.168.1.17'
 PORT = 8080
 ADDR = (SERVER, PORT)
@@ -25,10 +24,11 @@ DISCONNECT_MESSAGE = '!DISCONNECT'
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(ADDR)
 
-car = Car()
-track = Track()
-player = Player()
-carproperties = CarProperties()
+ID = 0
+CAR = Car()
+TRACK = Track()
+PLAYER = Player()
+
 laps = 0
 lapcount = 0
 
@@ -40,7 +40,6 @@ wheeltemperaturefl = []
 wheeltemperaturefr = []
 wheeltemperaturerl = []
 wheeltemperaturerr = []
-
 wheelpressurefl = []
 wheelpressurefr = []
 wheelpressurerl = []
@@ -48,77 +47,59 @@ wheelpressurerr = []
 
 #---HANDLERS---#
 def send(msg):
-    message = msg.encode(FORMAT)
+    message = pickle.dumps(msg)
 
-    msg_length = len(message)
-    send_length = str(msg_length).encode(FORMAT)
-    send_length += b' ' * (HEADER - len(send_length))
+    enconded_message = message
+    message_length = len(message)
+    message = str(message_length).encode(FORMAT)
+    message += b' ' *(HEADER - len(message)) + enconded_message
 
-    client.send(send_length)
     client.send(message)
 
-def crossLap():
-    carproperties._tyre["WheelTemperatureFL"] = wheeltemperaturefl
-    carproperties._tyre["WheelTemperatureFR"] = wheeltemperaturefr
-    carproperties._tyre["WheelTemperatureRL"] = wheeltemperaturerl
-    carproperties._tyre["WheelTemperatureRR"] = wheeltemperaturerr
-
-    carproperties._tyre["WheelPressureFL"] = wheelpressurefl
-    carproperties._tyre["WheelPressureFR"] = wheelpressurefr
-    carproperties._tyre["WheelPressureRL"] = wheelpressurerl
-    carproperties._tyre["WheelPressureRR"] = wheelpressurerr
-
-#---Main Code---#
+#---UI---#
 def acMain(ac_version):
     appWindow = ac.newApp("Race Stats")
     ac.setSize(appWindow, 300, 350)
 
     return "Race Stats"
 
-#---Updated Values---#
+#---Updated Values Every Second---#
 def acUpdate(deltaT):
     global laps, lapcount, lp, totalTime
 
+    # Get session state
     status = info.graphics.status
 
-    laps = ac.getCarState(carproperties.Id, acsys.CS.LapCount)
+    laps = ac.getCarState(ID, acsys.CS.LapCount)
     lp = info.graphics.currentTime
 
     tyretemperature = info.physics.tyreCoreTemperature
-    tyrepressure = info.physics.wheelsPressure
-
-    #---Update Array Values every second---#
-    carproperties.SpeedKMH = car.get(carproperties.Id, "speedkmh")
-    carproperties.RPM = car.get(carproperties.Id, "rpm")
-    carproperties.Gear = car.get(carproperties.Id, "gear") - 1
-
-    carproperties.Gas = car.get(carproperties.Id, "gas")
-    carproperties.Brake = car.get(carproperties.Id, "brake")
-    carproperties.Clutch = car.get(carproperties.Id, "clutch")
-
-    carproperties.SteerAngle = car.get(carproperties.Id, "steerangle")
-    carproperties.TurboBoost = car.get(carproperties.Id, "turbo")
-    carproperties.Fuel = info.physics.fuel
-
     wheeltemperaturefl.append(tyretemperature[0])
-    wheeltemperaturefr.append(tyretemperature[1])
-    wheeltemperaturerl.append(tyretemperature[2])
-    wheeltemperaturerr.append(tyretemperature[3])
 
+    tyrepressure = info.physics.wheelsPressure
     wheelpressurefl.append(tyrepressure[0])
-    wheelpressurefr.append(tyrepressure[1])
-    wheelpressurerl.append(tyrepressure[2])
-    wheelpressurerr.append(tyrepressure[3])
 
-    track.getName(carproperties.Id)
+    TRACK.getName(ID)
 
     totalTime = abs(info.graphics.sessionTimeLeft)
     totalTime_seconds = (totalTime / 1000) % 60
     totalTime_minutes = (totalTime // 1000) // 60
 
-    send(str(car.get(carproperties.Id, "rpm")))
+    # Send data to server socket
+    data = {
+        "TRACK_INFO":{"name":str(TRACK.getName(ID))},
+        "CAR_INFO":{
+            "SPEEDKMH":str(CAR.get(ID, 'speedkmh')),
+            "RPM":str(CAR.get(ID, 'rpm')),
+            "GAS":str(CAR.get(ID, 'gas')),
+            "BRAKE":str(CAR.get(ID, 'brake')),
+            "CLUTCH":str(CAR.get(ID, 'clutch'))
+            }
+        }
+        
+    send(data)
 
-    #---Get info when cross the lap---#
+    # Get info when cross the lap
     if laps > lapcount:
         lapcount = laps
 
