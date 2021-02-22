@@ -15,8 +15,8 @@ from third_party.sim_info import info
 
 #---VAR INITIALIZATION---#
 HEADER = 30
-SERVER = '192.168.1.17'
-PORT = 8080
+SERVER = '192.168.1.18'
+PORT = 8081
 ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = '!DISCONNECT'
@@ -87,16 +87,23 @@ def acUpdate(deltaT):
 
     # Send data to server socket
     data = {
-        "TRACK_INFO":{"name":str(TRACK.getName(ID))},
+        "TRACK_INFO":{
+            "TRACK_NAME":str(TRACK.getName(ID))
+        },
         "CAR_INFO":{
-            "SPEEDKMH":str(CAR.get(ID, 'speedkmh')),
-            "RPM":str(CAR.get(ID, 'rpm')),
-            "GAS":str(CAR.get(ID, 'gas')),
-            "BRAKE":str(CAR.get(ID, 'brake')),
-            "CLUTCH":str(CAR.get(ID, 'clutch'))
-            }
+            "CURRENT_SPEEDKMH":str(CAR.get(ID, 'speedkmh')),
+            "CURRENT_RPM":str(CAR.get(ID, 'rpm')),
+            "CURRENT_GEAR":str(CAR.get(ID, 'gear') - 1),
+            "GAS_PEDAL":str(CAR.get(ID, 'gas')),
+            "BRAKE_PEDAL":str(CAR.get(ID, 'brake')),
+            "CLUTCH_PEDAL":str(CAR.get(ID, 'clutch')),
+            "STEER_ANGLE":str(CAR.get(ID, 'steerangle'))
+        },
+        "TIME_INFO":{
+            "CURRENT_TIME":str("{:.0f}:{:06.3f}".format(totalTime_minutes, totalTime_seconds))
         }
-        
+    }
+
     send(data)
 
     # Get info when cross the lap
