@@ -14,7 +14,7 @@ os.environ['PATH'] = os.environ['PATH'] + ";."
 from third_party.sim_info import info
 
 #---VAR INITIALIZATION---#
-HEADER = 30
+HEADER = 4096
 SERVER = '192.168.1.18'
 PORT = 8081
 ADDR = (SERVER, PORT)
@@ -29,32 +29,32 @@ CAR = Car()
 TRACK = Track()
 PLAYER = Player()
 
-laps = 0
-lapcount = 0
-
-tyretemperature = 0
-tyrepressure = 0
-fuel = 0
-
-wheeltemperaturefl = []
-wheeltemperaturefr = []
-wheeltemperaturerl = []
-wheeltemperaturerr = []
-wheelpressurefl = []
-wheelpressurefr = []
-wheelpressurerl = []
-wheelpressurerr = []
+buffer = []
 
 #---HANDLERS---#
-def send(msg):
-    message = pickle.dumps(msg)
+def encodeData(data):    
+    message = pickle.dumps(data)
 
     enconded_message = message
     message_length = len(message)
+    
     message = str(message_length).encode(FORMAT)
     message += b' ' *(HEADER - len(message)) + enconded_message
 
-    client.send(message)
+    return message
+
+def sendData(data):
+    if data == DISCONNECT_MESSAGE:
+        message = encodeData(data)
+        client.send(message)
+        buffer.clear()
+
+    buffer.append(data)
+
+    if len(buffer) == 60:
+        message = encodeData(buffer)
+        client.send(message)
+        buffer.clear()
 
 #---UI---#
 def acMain(ac_version):
@@ -65,21 +65,12 @@ def acMain(ac_version):
 
 #---Updated Values Every Second---#
 def acUpdate(deltaT):
-    global laps, lapcount, lp, totalTime
+    global buffer
 
     # Get session state
-    status = info.graphics.status
+    #status = info.graphics.status
 
-    laps = ac.getCarState(ID, acsys.CS.LapCount)
-    lp = info.graphics.currentTime
-
-    tyretemperature = info.physics.tyreCoreTemperature
-    wheeltemperaturefl.append(tyretemperature[0])
-
-    tyrepressure = info.physics.wheelsPressure
-    wheelpressurefl.append(tyrepressure[0])
-
-    TRACK.getName(ID)
+    #ac.log(str(TRACK.getTrackInfo(info.static.track)))
 
     totalTime = abs(info.graphics.sessionTimeLeft)
     totalTime_seconds = (totalTime / 1000) % 60
@@ -88,34 +79,34 @@ def acUpdate(deltaT):
     # Send data to server socket
     data = {
         "TRACK_INFO":{
-            "TRACK_NAME":str(TRACK.getName(ID))
+            "TRACK_NAME":str(TRACK.getTrackInfo(info.static.track)),
+            "TRACK_CONFIGURATION":str(TRACK.getTrackInfo(info.static.trackConfiguration)),
+            "TRACK_SECTOR_COUNT":str(TRACK.getTrackInfo(info.static.sectorCount)),
+            "TRACK_AIR_DENSITY":str(TRACK.getTrackInfo(info.physics.airDensity)),
+            "TRACK_AIR_TEMPERATURE":str(TRACK.getTrackInfo(info.physics.airTemp)),
+            "TRACK_ROAD_TEMPERATURE":str(TRACK.getTrackInfo(info.physics.roadTemp)),
+            "TRACK_WIND_SPEED":str(TRACK.getTrackInfo(info.graphics.windSpeed)),
+            "TRACK_WIND_DIRECTION":str(TRACK.getTrackInfo(info.graphics.windDirection)),
         },
         "CAR_INFO":{
-            "CURRENT_SPEEDKMH":str(CAR.get(ID, 'speedkmh')),
-            "CURRENT_RPM":str(CAR.get(ID, 'rpm')),
-            "CURRENT_GEAR":str(CAR.get(ID, 'gear') - 1),
-            "GAS_PEDAL":str(CAR.get(ID, 'gas')),
-            "BRAKE_PEDAL":str(CAR.get(ID, 'brake')),
-            "CLUTCH_PEDAL":str(CAR.get(ID, 'clutch')),
-            "STEER_ANGLE":str(CAR.get(ID, 'steerangle'))
+            "CAR_CURRENT_SPEEDKMH":str(CAR.getCarInfo(info.physics.speedKmh)),
+            "CAR_CURRENT_RPM":str(CAR.getCarInfo(info.physics.rpms)),
+            "CAR_CURRENT_GEAR":str(CAR.getCarInfo(info.physics.gear) - 1),
+            "CAR_GAS_PEDAL":str(CAR.getCarInfo(info.physics.gas)),
+            "CAR_BRAKE_PEDAL":str(CAR.getCarInfo(info.physics.brake)),
+            "CAR_CLUTCH_PEDAL":str(CAR.getCarInfo(info.physics.clutch)),
+            "CAR_STEER_ANGLE":str(CAR.getCarInfo(info.physics.steerAngle)),
+            "CAR_CURRENT_FUEL":str(CAR.getCarInfo(info.physics.fuel)),
+            "CAR_MAX_FUEL":str(CAR.getCarInfo(info.static.maxFuel)),
+            "CAR_AID_FUEL_RATE":str(CAR.getCarInfo(info.static.aidFuelRate)),
         },
         "TIME_INFO":{
-            "CURRENT_TIME":str("{:.0f}:{:06.3f}".format(totalTime_minutes, totalTime_seconds))
+            "CURRENT_TIME":str("{:.0f}:{:06.3f}".format(totalTime_minutes, totalTime_seconds)),
         }
     }
 
-    send(data)
-
-    # Get info when cross the lap
-    if laps > lapcount:
-        lapcount = laps
-
-        if status != 1:
-            ac.log(str("{:.0f}:{:06.3f}".format(totalTime_minutes, totalTime_seconds)))
-
-        ac.log(str(info.graphics.lastTime))
-        ac.log(str(info.graphics.bestTime))
+    sendData(data)
 
 #---When Close Game---#
 def acShutdown():
-    send(DISCONNECT_MESSAGE)
+    sendData(DISCONNECT_MESSAGE)

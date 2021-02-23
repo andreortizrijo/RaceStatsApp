@@ -14,14 +14,29 @@ from third_party.sim_info import info
 
 class Track():
 
-    def getName(self, id):
-        trackname = ac.getTrackName(id)
-        trackname = trackname.replace("ks", "")
-        trackname = trackname.replace("_", " ")
-
-        if info.static.trackConfiguration == "":
-            result = trackname
+    def getTrackName(self):
+        trackname = info.static.track
+        if trackname:
+            trackname = trackname.replace('ks', '')
+            trackname = trackname.replace('_', '')
         else:
-            result = trackname + ' - ' + info.static.trackConfiguration
+            trackname = 'No information about track name.'
 
-        return result
+        return trackname
+    
+    def getTrackConfig(self):
+        trackconfig = info.static.trackConfiguration
+        if trackconfig:
+            trackconfig = trackconfig.replace('ks', '')
+            trackconfig = trackconfig.replace('_', '')
+        else:
+            trackconfig = 'No information about track configuration.'
+
+        return trackconfig
+
+    def getTrackInfo(self, property):
+        return property
+    
+    # The highest number = higher lvl of difficulty on curves
+    #def getTrackSPlineLength(self):
+        #return info.static.trackSPlineLength
