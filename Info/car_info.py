@@ -1,17 +1,16 @@
-import ac, acsys
+import ac, acsys, os, sys
+import platform
 
-car_properties_API = {
-    "speedkmh" : acsys.CS.SpeedKMH,
-    "rpm" : acsys.CS.RPM,
-    "gear" : acsys.CS.Gear,
-    "gas" : acsys.CS.Gas,
-    "brake" : acsys.CS.Brake,
-    "clutch" : acsys.CS.Clutch,
-    "steerangle" : acsys.CS.Steer,
-    "turbo" : acsys.CS.TurboBoost,
-}
+if platform.architecture()[0] == "64bit":
+    libdir = 'third_party/lib64'
+else:
+    libdir = 'third_party/lib'
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), libdir))
+os.environ['PATH'] = os.environ['PATH'] + ";."
+
+from third_party.sim_info import info
 
 class Car():
 
-    def get(self, id, property):
-        return ac.getCarState(id, car_properties_API[property])
+    def getCarInfo(self, property):
+        return property
