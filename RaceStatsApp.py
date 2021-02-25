@@ -1,6 +1,5 @@
 from Info.car_info import Car
 from Info.track_info import Track
-from Info.player_info import Player
 import ac, acsys, os, sys
 import platform, socket, pickle, time
 
@@ -27,20 +26,16 @@ client.connect(ADDR)
 ID = 0
 CAR = Car()
 TRACK = Track()
-PLAYER = Player()
 
 buffer = []
+first_run = True
 
-#---HANDLERS---#
-def encodeData(data):    
+def encodeData(data): 
     message = pickle.dumps(data)
+    message_buffer = message
 
-    enconded_message = message
-    message_length = len(message)
-    
-    message = str(message_length).encode(FORMAT)
-    message += b' ' *(HEADER - len(message)) + enconded_message
-
+    message = str(len(message)).encode(FORMAT)
+    message += b' ' *(HEADER - len(message)) + message_buffer
     return message
 
 def sendData(data):
@@ -51,7 +46,7 @@ def sendData(data):
 
     buffer.append(data)
 
-    if len(buffer) == 60:
+    if len(buffer) == 60: # 60fps == 1second
         message = encodeData(buffer)
         client.send(message)
         buffer.clear()
@@ -65,22 +60,27 @@ def acMain(ac_version):
 
 #---Updated Values Every Second---#
 def acUpdate(deltaT):
-    global buffer
+    global buffer, first_run
 
-    # Get session state
-    #status = info.graphics.status
-
-    #ac.log(str(TRACK.getTrackInfo(info.static.track)))
-
+    # Retrive the Time data from the AC Session and formta it
     totalTime = abs(info.graphics.sessionTimeLeft)
     totalTime_seconds = (totalTime / 1000) % 60
     totalTime_minutes = (totalTime // 1000) // 60
 
+    if first_run:
+        data = {
+            "SESSION_INFO":{
+                "SESSION_TRACK":str(TRACK.getTrackInfo(info.static.track)),
+                "SESSION_TRACK_CONFIGURATION":str(TRACK.getTrackInfo(info.static.trackConfiguration))
+            }
+        }
+
+        sendData(data)
+        first_run = False
+
     # Send data to server socket
     data = {
         "TRACK_INFO":{
-            "TRACK_NAME":str(TRACK.getTrackInfo(info.static.track)),
-            "TRACK_CONFIGURATION":str(TRACK.getTrackInfo(info.static.trackConfiguration)),
             "TRACK_SECTOR_COUNT":str(TRACK.getTrackInfo(info.static.sectorCount)),
             "TRACK_AIR_DENSITY":str(TRACK.getTrackInfo(info.physics.airDensity)),
             "TRACK_AIR_TEMPERATURE":str(TRACK.getTrackInfo(info.physics.airTemp)),
