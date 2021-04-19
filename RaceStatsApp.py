@@ -14,7 +14,7 @@ from third_party.sim_info import info
 
 #---VAR INITIALIZATION---#
 HEADER = 4096
-SERVER = '192.168.1.22'
+SERVER = '192.168.1.38'
 PORT = 8081
 ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
