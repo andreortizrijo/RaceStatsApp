@@ -130,5 +130,4 @@ dmypy.json
 
 .vscode/
 
-server.py
-client.py
+config.ini

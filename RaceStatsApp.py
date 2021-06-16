@@ -20,7 +20,7 @@ ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = '!DISCONNECT'
 CONFIG_OBJECT = ConfigParser()
-FIRST_RUN = False
+FIRST_RUN = True
 BUFFER = []
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -37,7 +37,7 @@ def encodeData(data):
     message += b' ' *(HEADER - len(message)) + message_buffer
     return message
 
-def sendData(data):
+def sendData(data, first_run):
     if data == DISCONNECT_MESSAGE:
         message = encodeData(data)
         client.send(message)
@@ -45,10 +45,16 @@ def sendData(data):
 
     BUFFER.append(data)
 
+    if first_run == True:
+        message = encodeData(BUFFER)
+        client.send(message)
+        BUFFER.clear()
+
     if len(BUFFER) == 60: # 60fps == 1second
         message = encodeData(BUFFER)
         client.send(message)
         BUFFER.clear()
+    
 
 #---UI---#
 def acMain(ac_version):
@@ -69,9 +75,10 @@ def acUpdate(deltaT):
 
     current_time = "{:.0f}:{:06.3f}".format(total_time_minutes, total_time_seconds)
 
-    data = {
+    if FIRST_RUN:
+        data = {
             "METADATA":{
-                "TOKEN": CONFIG_OBJECT['AUTH']['token']
+                "TOKEN":CONFIG_OBJECT['AUTH']['token']
             },
             "SESSION_INFO":{
                 "SESSION_TRACK":str(info.static.track),
@@ -79,51 +86,42 @@ def acUpdate(deltaT):
             }
         }
 
-    sendData(data)
+        sendData(data, FIRST_RUN)
+        FIRST_RUN = False
 
-#    if FIRST_RUN:
-        #data = {
-            #"METADATA":{
-                #"TOKEN": CONFIG_OBJECT['AUTH']['token']
-            #},
-            #"SESSION_INFO":{
-                #"SESSION_TRACK":str(info.static.track),
-                #"SESSION_TRACK_CONFIGURATION":str(info.static.trackConfiguration)
-            #}
-        #}
-
-        #sendData(data)
-        #FIRST_RUN = False
-
-    #if current_state == 2 and current_time != "nan:000nan":
-    #    data = {
-    #        "TRACK_INFO":{
-    #            "TRACK_SECTOR_COUNT":str(info.static.sectorCount),
-    #            "TRACK_AIR_DENSITY":str(info.physics.airDensity),
-    #            "TRACK_AIR_TEMPERATURE":str(info.physics.airTemp),
-    #            "TRACK_ROAD_TEMPERATURE":str(info.physics.roadTemp),
-    #            "TRACK_WIND_SPEED":str(info.graphics.windSpeed),
-    #            "TRACK_WIND_DIRECTION":str(info.graphics.windDirection),
-    #        },
-    #        "CAR_INFO":{
-    #            "CAR_CURRENT_SPEEDKMH":str(info.physics.speedKmh),
-    #            "CAR_CURRENT_RPM":str(info.physics.rpms),
-    #            "CAR_CURRENT_GEAR":str(info.physics.gear - 1),
-    #            "CAR_GAS_PEDAL":str(info.physics.gas),
-    #            "CAR_BRAKE_PEDAL":str(info.physics.brake),
-    #            "CAR_CLUTCH_PEDAL":str(info.physics.clutch),
-    #            "CAR_STEER_ANGLE":str(info.physics.steerAngle),
-    #            "CAR_CURRENT_FUEL":str(info.physics.fuel),
-    #            "CAR_MAX_FUEL":str(info.static.maxFuel),
-    #            "CAR_AID_FUEL_RATE":str(info.static.aidFuelRate),
-    #        },
-    #        "TIME_INFO":{
-    #            "CURRENT_TIME":str(current_time),
-    #        }
-    #    }
-    #
-    #    sendData(data)
+    if current_state == 2:
+        if current_time != "nan:000nan":
+            data = {
+                "METADATA":{
+                    "TOKEN":CONFIG_OBJECT['AUTH']['token']
+                },
+                "TRACK_INFO":{
+                    "TRACK_SECTOR_COUNT":str(info.static.sectorCount),
+                    "TRACK_AIR_DENSITY":str(info.physics.airDensity),
+                    "TRACK_AIR_TEMPERATURE":str(info.physics.airTemp),
+                    "TRACK_ROAD_TEMPERATURE":str(info.physics.roadTemp),
+                    "TRACK_WIND_SPEED":str(info.graphics.windSpeed),
+                    "TRACK_WIND_DIRECTION":str(info.graphics.windDirection),
+                },
+                "CAR_INFO":{
+                    "CAR_CURRENT_SPEEDKMH":str(info.physics.speedKmh),
+                    "CAR_CURRENT_RPM":str(info.physics.rpms),
+                    "CAR_CURRENT_GEAR":str(info.physics.gear - 1),
+                    "CAR_GAS_PEDAL":str(info.physics.gas),
+                    "CAR_BRAKE_PEDAL":str(info.physics.brake),
+                    "CAR_CLUTCH_PEDAL":str(info.physics.clutch),
+                    "CAR_STEER_ANGLE":str(info.physics.steerAngle),
+                    "CAR_CURRENT_FUEL":str(info.physics.fuel),
+                    "CAR_MAX_FUEL":str(info.static.maxFuel),
+                    "CAR_AID_FUEL_RATE":str(info.static.aidFuelRate),
+                },
+                "TIME_INFO":{
+                    "CURRENT_TIME":str(current_time),
+                }
+            }
+        
+            sendData(data, FIRST_RUN)
 
 #---When Close Game---#
 def acShutdown():
-    sendData(DISCONNECT_MESSAGE)
+    sendData(DISCONNECT_MESSAGE, False)
