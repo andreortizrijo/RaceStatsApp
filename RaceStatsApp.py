@@ -36,7 +36,7 @@ FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = '!DISCONNECT'
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#client.connect(ADDR)
+client.connect(ADDR)
 
 def dump_data(data): 
     message = pickle.dumps(data)
@@ -51,17 +51,9 @@ def send_data(data, is_racing):
         message = dump_data(data)
         client.send(message)
 
-    BUFFER.append(data)
-
-    if is_racing == True:
-        message = dump_data(BUFFER)
+    if is_racing:
+        message = dump_data(data)
         client.send(message)
-        BUFFER.clear()
-
-    if len(BUFFER) == 5:
-        message = dump_data(BUFFER)
-        client.send(message)
-        BUFFER.clear()
  
 def format_time(time):
     time_seconds = (time / 1000) % 60
@@ -80,7 +72,6 @@ def set_array(array, type, length):
 def acMain(ac_version):
     appWindow = ac.newApp('RaceStats')
     ac.setSize(appWindow, 280, 70)
-    ac.setBackgroundOpacity(appWindow, 0)
 
     racing_checkbox = ac.addCheckBox(appWindow, 'TURN ON IF YOU ARE RACING!')
     ac.setPosition(racing_checkbox, 3, 35)
@@ -90,18 +81,14 @@ def acMain(ac_version):
 
 def racing_checkbox_onclick(*args):
     global IS_RACING
-
-    if IS_RACING:
-        IS_RACING = False
-    else:
-        IS_RACING = True
+    IS_RACING = not IS_RACING
 
 #---RUNNING---#
 def acUpdate(deltaT):
     global BUFFER, IS_RACING, SESSION_FIRST
     global STATIC, PHYSICS, GRAPHICS
 
-    session_state = GRAPHICS.status
+    #session_state = GRAPHICS.status
 
     time = format_time(abs(GRAPHICS.sessionTimeLeft))
     best_lap = format_time(ac.getCarState(ID, acsys.CS.BestLap))
@@ -116,8 +103,7 @@ def acUpdate(deltaT):
                 "SESSION_TRACK_CONFIGURATION":str(STATIC.trackConfiguration)
             }
         }
-
-        #send_data(session_data, IS_RACING)
+        send_data(session_data, SESSION_FIRST)
         SESSION_FIRST = False
 
     if IS_RACING:
@@ -136,7 +122,7 @@ def acUpdate(deltaT):
                 "TRACK_SURFACE_GRIP":str(GRAPHICS.surfaceGrip),
             },
         }
-        #send_data(track_data, IS_RACING)
+        send_data(track_data, IS_RACING)
 
         car_data = {
             "METADATA":{
@@ -153,9 +139,9 @@ def acUpdate(deltaT):
                 "CAR_CLUTCH_PEDAL":str(PHYSICS.clutch),
                 "CAR_STEER_ANGLE":str(PHYSICS.steerAngle),
                 "CAR_TYRE_COMPOUND":str(GRAPHICS.tyreCompound)
-            }
+            },
         }
-        #send_data(car_data, IS_RACING)
+        send_data(car_data, IS_RACING)
 
         time_data = {
             "METADATA":{
@@ -166,7 +152,7 @@ def acUpdate(deltaT):
                 "TIME_BEST_TIME":str(best_lap)
             }
         }
-        #send_data(time_data, IS_RACING)
+        send_data(time_data, IS_RACING)
 
-#def acShutdown():
-    #send_data(DISCONNECT_MESSAGE, False)
+def acShutdown():
+    send_data(DISCONNECT_MESSAGE, False)
